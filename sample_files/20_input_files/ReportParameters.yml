@@ -4,7 +4,7 @@ default:
       Scenariochoose: SDS
       AccountingPrinciple: PortfolioWeight
       ScenarioGeographyChoose: GlobalAggregate
-      EquityMarketSelection: Global
+      EquityMarketSelection: GlobalMarket
       Language: "EN"
       Startyear: 2019
       
