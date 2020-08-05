@@ -298,8 +298,8 @@ filter_by_parameters <- function(df, dfType, byscenario = TRUE, scenario.irrelev
     if (ScenarioGeographyChoose != "" & "scenario_geography" %in% colnames(df) & data_check(df) == TRUE){
       if(ScenarioGeographyChoose == "GlobalAggregate"){
         df1 <- df %>% filter(ald_sector == "Power", scenario_geography == "GlobalAggregate")
-        if (!data_check(df1)){df1 <- df %>% filter(ald_sector == "Power", scenario_geography == "Global")}
-        df2 <- df %>% filter(ald_sector != "Power", scenario_geography == "Global")
+        if (!data_check(df1)){df1 <- df %>% filter(ald_sector == "Power", scenario_geography %in% c("Global", "GlobalMarket"))}
+        df2 <- df %>% filter(ald_sector != "Power", scenario_geography %in% c("Global", "GlobalMarket"))
         df <- rbind(df1,df2)
         
       }else{
