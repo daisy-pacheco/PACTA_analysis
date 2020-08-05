@@ -825,9 +825,9 @@ get_and_clean_fund_data <- function(){
   }else if(file.exists(paste0(analysis_inputs_path,"/fund_data_2018Q4.rda"))){
     fund_data <- readRDS(paste0(analysis_inputs_path,"/fund_data_2018Q4.rda"))
     print("Old Fund Data being used. Replace FundsData2018Q4 or check name of file.")
-  }else if(file.exists(paste0(analysis_inputs_path, "/SFC_26052020_funds.csv"))){
-    fund_data <- read_csv(paste0(analysis_inputs_path, "/SFC_26052020_funds.csv"))
-    print("2020Q2 SFC fund data being used")
+  }else if(file.exists(paste0(analysis_inputs_path, "/Asofid_fund_holdings_2019Q4.csv"))){
+    fund_data <- read_csv(paste0(analysis_inputs_path, "/Asofid_fund_holdings_2019Q4.csv"))
+    print("Asofid_fund_holdings_2019Q4 fund data being used")
   }else{
     if(!data_check(fund_data)){
       warning("No fund data available")}
@@ -1208,7 +1208,7 @@ create_audit_file <- function(portfolio_total){
   
   audit_file <- portfolio_total %>% 
     select(all_of(grouping_variables), holding_id, isin, value_usd, company_name, asset_type,  has_revenue_data, valid_input, 
-           direct_holding, bics_sector, financial_sector, sectors_with_assets, has_ald_in_fin_sector,flag)
+           direct_holding, bics_sector, financial_sector, has_ald_in_fin_sector,flag)
   
   if(has_revenue == FALSE){audit_file <- audit_file %>% select(-has_revenue_data)}
   
