@@ -29,6 +29,7 @@ source("0_reporting_functions.R")
 source("0_portfolio_input_check_functions.R")
 source("0_global_functions.R")
 source("0_sda_approach.R")
+source("0_SovereignBondsCharts.R")
 
 
 # Set Project Settings

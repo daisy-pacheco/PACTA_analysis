@@ -42,7 +42,7 @@ portfolio_overview$portfolio_name <- clean_punctuation(portfolio_overview$portfo
 report_list <- get_report_list(portfolio_overview)
 
 
-#template <- read_utf8_tex(paste0(getwd(),"/Templates/",templateversion,".tex"))
+template <- readLines(paste0(working_location,"/Templates/",templateversion,".tex"),encoding = "UTF-8")
 translate_labels(Language)
 
 if(has_sb){SB.Values = GetSovBondCoverage()}
@@ -64,7 +64,8 @@ for (i in 1:nrow(report_list)){
   ########################
   set_initial_variables()
   test_list <- create_test_list()
-
+  
+  # in the following function, for the sub-function "define_benchmarks()" do not forget to change the name of the folder to read the indices! Indices2018Q4 or Indices2019Q4
   results_call()
 
   #########################
@@ -75,7 +76,9 @@ for (i in 1:nrow(report_list)){
   
   ReportFigures(explicit_filenames = F)
   
- 
+  SovereignBondFigures()
+  
+  ReportGeneration()
   
   
   

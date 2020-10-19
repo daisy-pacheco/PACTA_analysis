@@ -131,9 +131,9 @@ define_benchmarks <- function(){
     #   filter(portfolio_name == cb_market_ref)
     
     
-    eq_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Equity_results_portfolio.rda")) %>%
+    eq_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Indices2018Q4/Equity_results_portfolio.rda")) %>%
       filter(portfolio_name == eq_market_ref)
-    cb_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Bonds_results_portfolio.rda"))%>%
+    cb_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Indices2018Q4/Bonds_results_portfolio.rda"))%>%
       filter(portfolio_name == cb_market_ref)
     # }
   }else{
@@ -159,7 +159,7 @@ results_call <- function(){
   
   # RenewableAdditions <<- readRDS(paste0(analysis_inputs_path, "/RenewablesAdditionsData.rda"))
   # CoalRetirements <<- readRDS(paste0(analysis_inputs_path, "/CoalRetirementsData.rda"))
-  # CarbonData <<-  readRDS(paste0(analysis_inputs_path, "/CarbonCapexUpstream.rda"))
+  CarbonData <<-  readRDS(paste0(analysis_inputs_path, "/CarbonCapexUpstream.rda"))
   
   if(has_equity){
     EQCompProdSnapshot <<- read_rds(paste0(results_path, "/",investor_name_select,"/Equity_results_company.rda")) 
@@ -214,7 +214,7 @@ results_call <- function(){
   
   if(has_sb){
     
-    SB.Summary <<- read.csv(paste0(PROC.INPUT.PATH,"SovereignBondSummary.csv"),strip.white = T,stringsAsFactors = F)
+    SB.Summary <<- read.csv(paste0(proc_input_path,"/SovereignBondSummary.csv"))
   }
   
   if(inc_sda_approach){
@@ -298,8 +298,8 @@ filter_by_parameters <- function(df, dfType, byscenario = TRUE, scenario.irrelev
     if (ScenarioGeographyChoose != "" & "scenario_geography" %in% colnames(df) & data_check(df) == TRUE){
       if(ScenarioGeographyChoose == "GlobalAggregate"){
         df1 <- df %>% filter(ald_sector == "Power", scenario_geography == "GlobalAggregate")
-        if (!data_check(df1)){df1 <- df %>% filter(ald_sector == "Power", scenario_geography %in% c("Global", "GlobalMarket"))}
-        df2 <- df %>% filter(ald_sector != "Power", scenario_geography %in% c("Global", "GlobalMarket"))
+        if (!data_check(df1)){df1 <- df %>% filter(ald_sector == "Power", scenario_geography == "Global")}
+        df2 <- df %>% filter(ald_sector != "Power", scenario_geography == "Global")
         df <- rbind(df1,df2)
         
       }else{
@@ -411,8 +411,8 @@ create_test_list <- function() {
       group_by(investor_name,portfolio_name,ald_sector) %>%
       summarise(ald_sectorProd = sum(Production, na.rm = T))
     
+    Equity$ald_sector <- ifelse(Equity$ald_sector == "Oil&Gas","OilGas",Equity$ald_sector)
     if(nrow(Equity) > 0){
-      Equity$ald_sector <- ifelse(Equity$ald_sector == "Oil&Gas","OilGas",Equity$ald_sector)
       Equity$Indicator <- ifelse(Equity$ald_sectorProd > 0,TRUE,FALSE)
       Equity$ald_sectorProd <- NULL
       Equity$ald_sector <- paste0(Equity$ald_sector,".EQ")
@@ -846,7 +846,7 @@ ReportFigures <- function(explicit_filenames = F){
     if (!explicit_filenames==F){explicit_filename = "_companies_oil_share_equity_"}
     OilShare("47", no_companies, "EQ", explicit_filename = explicit_filename)
     
-    # CarbonBudget("48", no_companies, "EQ")
+    CarbonBudget("48", no_companies, "EQ")
     
     # if (IncCoalRetirement){
     #   CoalRetirementChart("63",no_companies,"EQ")
@@ -2596,16 +2596,20 @@ ShippingChart <- function(plotnumber,chart_type, plot_year, sector_to_plot = "Sh
     
     sector_to_plot<<-"Shipping"
     
-    Market_e <- filter_by_parameters(eq_market,"EQ")
+    Market_e <- filter_by_parameters(eq_market,"EQ") %>% 
+      filter(!str_detect(technology, "No")) # filter to exclude No graded
     if(data_check(Market_e) == TRUE){Market_e$Type<- "Equity Market"}
     
-    Market_b<- filter_by_parameters(cb_market,"CB", by_equity_market = FALSE)
+    Market_b<- filter_by_parameters(cb_market,"CB", by_equity_market = FALSE) %>% 
+      filter(!str_detect(technology, "No")) # filter to exclude No graded
     if(data_check(Market_b) == TRUE){Market_b$Type<- "Bond Market"}
     
-    Combin_e <- filter_by_parameters(EQCombin,"EQ")
+    Combin_e <- filter_by_parameters(EQCombin,"EQ") %>% 
+      filter(!str_detect(technology, "No")) # filter to exclude No graded
     if(data_check(Combin_e) == TRUE){Combin_e$Type<- "Equity Portfolio"}
     
-    Combin_b <- filter_by_parameters(CBCombin,"CB", by_equity_market = FALSE)
+    Combin_b <- filter_by_parameters(CBCombin,"CB", by_equity_market = FALSE) %>% 
+      filter(!str_detect(technology, "No")) # filter to exclude No graded
     if(data_check(Combin_b) == TRUE){Combin_b$Type<- "Bond Portfolio"}
     
     if (has_equity & has_debt){
@@ -2702,9 +2706,15 @@ ShippingChart <- function(plotnumber,chart_type, plot_year, sector_to_plot = "Sh
     
     
     if (!chart_type %in% c("All","")){
-      Production <- bind_rows(Combin,Peers,Market)
+      Production <- bind_rows(Combin,Peers,Market) %>% 
+        mutate(
+          technology = stringr::str_remove_all(technology, " ")
+        )
     }else if (chart_type %in% c("All","")){
-      Production <- bind_rows(Combin,Market)
+      Production <- bind_rows(Combin,Market) %>% 
+        mutate(
+          technology = stringr::str_remove_all(technology, " ")
+        )
     }
     
     # print(unique(Production$Type))
@@ -3203,7 +3213,7 @@ carboninoutdata <- function(chart_type){
   
   if(data_check(ccap) == TRUE){
     ccap$InsideCarbonBudget <- ccap$TotalCarbonBudget - ccap$OutsideCarbonBudget
-    ccap <- subset(ccap,select= c("id","TotalCarbonBudget","OutsideCarbonBudget","InsideCarbonBudget" ))
+    ccap <- subset(ccap,select= c("bloomberg_id","TotalCarbonBudget","OutsideCarbonBudget","InsideCarbonBudget" ))
     
     colnames(ccap) <- c("id","TotalCarbonBudget","Outside Carbon Budget","Inside Carbon Budget")
     ccap$Inside.Carbon.Budget <- ccap$`Inside Carbon Budget`/ccap$TotalCarbonBudget

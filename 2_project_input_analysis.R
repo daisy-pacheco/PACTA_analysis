@@ -96,3 +96,15 @@ if("rds" %in% file_format_list | "rda" %in% file_format_list){
   if(data_check(emissions_totals)){write_rds(emissions_totals, paste0(proc_input_path, "/", project_name, "_emissions.rda"))}
 }
 
+sb_data_path <<- paste0(path_dropbox_2dii("PortCheck","00_Data","04_Other","1_SovereignBonds"), "/")
+
+sov_bonds_contries <- portfolio_total %>% 
+  filter(security_type %in% c("Sovereign Debt", "Sovereign Agency Debt", "Government inflation linked Bonds"), 
+         security_bics_subgroup %in% c("Sovereign","Sovereign Agency", "Sovereigns")) %>% 
+  select(investor_name,portfolio_name,country_of_domicile,value_usd) %>% 
+  group_by(investor_name,portfolio_name,country_of_domicile) %>% 
+  summarise(value_usd = sum(value_usd, na.rm = T))
+
+sov_bonds_contries %>%
+  write_csv(paste0(proc_input_path, "/", "SovereignBondSummary.csv"))
+

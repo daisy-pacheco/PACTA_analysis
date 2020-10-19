@@ -110,32 +110,55 @@ ReportData <- function(){
     SovBondCov <<- round(SovBondCov*100,1)
     
     
-    sb <- read.csv(paste0(SB.DATA.PATH, "Fig.1_2 Credit ratingbycountry_Rev1_5.csv"),strip.white = T, stringsAsFactors = F)
+    sb <- read_csv(paste0(sb_data_path, "Fig.1_2 Credit ratingbycountry_Rev1_5.csv"))
     sb_countries <- SB.Summary %>% filter(investor_name == investor_name_select, portfolio_name == portfolio_name_select) 
     downgrade_countries <- sb %>% filter(iso2c %in% sb_countries$country_of_domicile, iso2c != "CO", S.P %in% c("BBB","BBB-") ) 
-    sb_downgrade <- sb_countries %>% filter(country_of_domicile %in% downgrade_countries) %>% summarise(ValUSD = sum(ValueUSD,na.rm = T))
+    sb_downgrade <- sb_countries %>% filter(country_of_domicile %in% downgrade_countries) %>% summarise(ValUSD = sum(value_usd,na.rm = T))
     sb_downgrade_perc <- sb_downgrade$ValUSD / sum(sb_countries$ValueUSD,na.rm = T)
     sb_downgrade_perc <- if_else(is.nan(sb_downgrade_perc), 0, sb_downgrade_perc)
     sb_downgrade_perc <<- sb_downgrade_perc*100
     
     if(sb_downgrade_perc > 100){print("Greater than 100% for SB percent")}
     
+
   }
   
   SectorCheck <- test_list#[test_list$portfolio_name == portfolio_name_select,]
   
+  sector_checker <- function(sector_check_data, sector_names_to_check) {
+    vector_of_checks <- NULL
+    for (name_to_check in sector_names_to_check) {
+      if(name_to_check %in% colnames(sector_check_data)) {
+        vector_of_checks <- c(vector_of_checks, sector_check_data[[name_to_check]])
+      }
+    }
+    
+    if(is.null(vector_of_checks)) {
+      return(FALSE)
+    } else {
+      if (sum(vector_of_checks) >= 1) {
+        return(TRUE)
+      } else {
+        return(FALSE)
+      }
+    }
+  }
+  
   if (data_check(SectorCheck)){
     HasPower <<- SectorCheck$Power.CB| SectorCheck$Power.EQ
     HasAuto <<- SectorCheck$Automotive.CB | SectorCheck$Automotive.EQ
-    HasOG <<- SectorCheck$OilGas.CB | SectorCheck$OilGas.EQ
+    HasOG <<- sector_checker(SectorCheck, c('Oil&Gas.CB', 'OilGas.EQ', 'Oil&Gas.EQ'))
+    # HasOG <<- SectorCheck[['Oil&Gas.CB']] | SectorCheck$OilGas.EQ
     HasCoal <<- SectorCheck$Coal.CB | SectorCheck$Coal.EQ
     HasPowerCB <<- SectorCheck$Power.CB
     HasAutoCB <<- SectorCheck$Automotive.CB
-    HasOGCB <<- SectorCheck$OilGas.CB
+    HasOGCB <<- sector_checker(SectorCheck, c('OilGas.CB', 'Oil&Gas.CB'))
+    # HasOGCB <<- SectorCheck[['Oil&Gas.CB']]
     HasCoalCB <<- SectorCheck$Coal.CB
     HasPowerEQ <<- SectorCheck$Power.EQ
     HasAutoEQ <<- SectorCheck$Automotive.EQ
-    HasOGEQ <<- SectorCheck$OilGas.EQ
+    HasOGEQ <<- sector_checker(SectorCheck, c('OilGas.EQ', 'Oil&Gas.EQ'))
+    # HasOGEQ <<- SectorCheck$OilGas.EQ
     HasCoalEQ <<- SectorCheck$Coal.EQ
   }
   
@@ -162,7 +185,7 @@ ReportData <- function(){
   # }
   
   # Underscores break the report hence they are removed from names 
-  portfolio_name_select <- gsub("_"," ", portfolio_name_select)
+  #portfolio_name_select <- gsub("_"," ", portfolio_name_select)
   
   
   ### MERGE ALL RESULTS ###
@@ -378,25 +401,25 @@ ReportGeneration <- function(){
   
   
   text$text <- gsub("start_year+10",start_year+10,text$text,fixed=T)
-  text$text <- gsub("start_year+5",start_year+5,text$text,fixed=T)
+  text$text <- gsub("Startyear+5",start_year+5,text$text,fixed=T)
   text$text <- gsub("start_year",start_year,text$text)
-  text$text <- gsub("investor_name_select",investor_name_selectClean,text$text)
-  text$text <- gsub("portfolio_name_select",portfolio_name_selectClean,text$text)
+  text$text <- gsub("InvestorName",investor_name_selectClean,text$text)
+  text$text <- gsub("PortfolioName",portfolio_name_selectClean,text$text)
   text$text <- gsub("SizeofPortfolio",paste0("\\\\$",reportdata$SizeofPortfolio),text$text)
   text$text <- gsub("TodaysDate",reportdata$TodaysDate,text$text)
   text$text <- gsub("ReportDate",reportdata$ReportDate,text$text)
   text$text <- gsub("PeerGroup",reportdata$PeerGroup,text$text)
   text$text <- gsub("AssetClass",reportdata$AssetClass,text$text)
   text$text <- gsub("AnalysisCoverage",reportdata$AnalysisCoverage,text$text)
-  text$text <- gsub("scenarioText",reportdata$scenarioText,text$text)
+  text$text <- gsub("ScenarioText",reportdata$scenarioText,text$text)
   text$text <- gsub("scenarioName",reportdata$scenarioName,text$text)
-  text$text <- gsub("scenarioValue",reportdata$scenarioValue,text$text)
+  text$text <- gsub("ScenarioValue",reportdata$scenarioValue,text$text)
   text$text <- gsub("scenarioDescription",reportdata$scenarioDescription,text$text)
   text$text <- gsub("scenarioTemp",reportdata$scenarioTemp,text$text)
   text$text <- gsub("BenchmarkValue",reportdata$BenchmarkValue,text$text)
   text$text <- gsub("EQMarketRef",eq_market_ref, text$text)
   text$text <- gsub("CBMarketRef",cb_market_ref, text$text)
-  
+
   
   if (has_sb){
     text$text <- gsub("SovBondCov",SovBondCov, text$text)
