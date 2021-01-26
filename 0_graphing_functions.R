@@ -131,9 +131,9 @@ define_benchmarks <- function(){
     #   filter(portfolio_name == cb_market_ref)
     
     
-    eq_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Indices2018Q4/Equity_results_portfolio.rda")) %>%
+    eq_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Indices2019Q4/Equity_results_portfolio.rda")) %>%
       filter(portfolio_name == eq_market_ref)
-    cb_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Indices2018Q4/Bonds_results_portfolio.rda"))%>%
+    cb_market <<- read_rds(paste0(portcheck_v2_path,"/10_Projects/0_Indices/40_Results/Indices2019Q4/Bonds_results_portfolio.rda"))%>%
       filter(portfolio_name == cb_market_ref)
     # }
   }else{
@@ -2147,7 +2147,8 @@ OilShare <- function(plotnumber, companiestoprint, chart_type, explicit_filename
       if (data_check(OilData)){
         OilData$Type <- "equity"
         OilData$ID <- OilData$id
-        OilData$bloomberg_id <- NULL}
+        OilData$bloomberg_id <- NULL
+      }
       
       OilData<- left_join(comps %>% select(technology, company_name, id, port_weight),OilData,by=c("technology"="technology","id"="id"))
       
@@ -2291,20 +2292,19 @@ OilShare <- function(plotnumber, companiestoprint, chart_type, explicit_filename
     
     bar_labels <- c(company_labels,'                          ') #company_labels#
     
-    OilCompany <- OilCompany %>% filter(!is.na(port_weight))
+    OilCompany <- OilCompany %>% filter(!is.na(port_weight)) %>% 
+      mutate(port_weight = perc(port_weight))
     
-    PortPlot <- ggplot(data = OilCompany, aes(x = company_name, y = OilShare, fill = Oil.Type))+
-      geom_bar(position = "fill", stat = "identity")+
+    PortPlot <- ggplot(data = OilCompany)+
+      geom_bar(aes(x = as_factor(company_name), y = OilShare, fill = Oil.Type), position = "fill", stat = "identity")+
       scale_fill_manual(values=colors,labels = rev(paste(tech_labels, " ")), breaks = rev(techorder))+
       scale_y_continuous(expand=c(0,0), labels=percent)+
       scale_x_discrete(labels = bar_labels)+
       guides(fill=guide_legend(nrow = 1))+
       theme_barcharts()+
-      geom_text(data = OilCompany,
-                aes(x = company_name, y = 1),
-                label = perc(OilCompany$port_weight),
+      geom_text(aes(x = as_factor(company_name), y = 1, label = port_weight),
                 hjust = -1, color = textcolor, size=8*(5/14),
-                family = textfont)+
+                family = textfont) +
       # geom_text(aes(x="",y=1),
       #           label = x_Weight,
       #           hjust = -0.5, color = textcolor, size=8*(5/14),
